@@ -1,4 +1,14 @@
 (() => {
+  // Thanks https://hackernoon.com/functional-javascript-resolving-promises-sequentially-7aac18c4431e
+  const promiseSerial = funcs =>
+    funcs.reduce(
+      (promise, func) =>
+        promise.then(result =>
+          func().then(Array.prototype.concat.bind(result))
+        ),
+      Promise.resolve([])
+    );
+
   const extractIdRegExp = /pot.*_(\d*)/;
 
   let isTabPressed = false;
@@ -39,13 +49,16 @@
       .forEach(e => delete e.dataset.selected);
   };
 
+  const getSelectedTids = () =>
+    Array.from(document.querySelectorAll("[data-selected]")).map(
+      e => e.querySelector("textarea").id.match(extractIdRegExp)[1]
+    );
+
   const setDependency = () => {
     const focused = document.querySelector(".ItemRow--focused textarea");
     if (!focused) return;
 
-    const tids = Array.from(document.querySelectorAll("[data-selected]")).map(
-      e => e.querySelector("textarea").id.match(extractIdRegExp)[1]
-    );
+    const tids = getSelectedTids();
     if (tids.length === 0) return;
 
     const activeTid = focused.id.match(extractIdRegExp)[1];
@@ -60,6 +73,38 @@
         console.error(res);
         alert("Something went wrong.");
       } else {
+        unselectTasks();
+      }
+    });
+  };
+
+  const setSubtasks = () => {
+    const focused = document.querySelector(".ItemRow--focused textarea");
+    if (!focused) return;
+
+    const tids = getSelectedTids().reverse();
+    if (tids.length === 0) return;
+
+    const activeTid = focused.id.match(extractIdRegExp)[1];
+
+    const tasks = tids.map(tid => () =>
+      fetch(`${baseUrl}tasks/${tid}/setParent`, {
+        headers: getAuthHeader(),
+        method: "POST",
+        body: JSON.stringify({ data: { parent: activeTid } })
+      })
+    );
+
+    promiseSerial(tasks).then(responses => {
+      let succeeded = true;
+      responses.forEach(res => {
+        if (res.status >= 400) {
+          console.error(res);
+          alert("Something went wrong.");
+          succeeded = false;
+        }
+      });
+      if (succeeded) {
         unselectTasks();
       }
     });
@@ -87,6 +132,9 @@
         break;
       case "Escape":
         unselectTasks();
+        break;
+      case ">":
+        isTabPressed && setSubtasks();
         break;
       case ".":
         isTabPressed && setDependency();
