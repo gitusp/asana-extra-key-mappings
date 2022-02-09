@@ -9,5 +9,10 @@
   "manifest_version": 2,
   "name": "Asana Extra Key Mappings",
   "version": "1.0.0",
-  "web_accessible_resources": ["main.js"]
+  "web_accessible_resources": ["main.js"],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
 }
