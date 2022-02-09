@@ -8,7 +8,7 @@
   "description": "Extra key mappings to compensate missing features",
   "manifest_version": 2,
   "name": "Asana Extra Key Mappings",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "web_accessible_resources": ["main.js"],
   "permissions": ["storage"],
   "icons": {
